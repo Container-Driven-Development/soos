@@ -25,7 +25,14 @@ defmodule Soos do
   end
 
   def process(options) do
-    IO.puts "Hello #{options[:name]}"
+
+    filename = options[:name]
+
+    case File.read(filename) do
+      {:ok, body} -> :crypto.hash(:sha, body) |> Base.encode16 |> IO.puts
+      {:error, reason} -> IO.puts("Unable to open '#{filename}' because of following reason: #{reason}")
+    end
+
   end
 
   defp parse_args(args) do
