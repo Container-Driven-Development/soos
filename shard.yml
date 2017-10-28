@@ -1,0 +1,5 @@
+dependencies:
+  admiral:
+    github: jwaldrip/admiral.cr
+name: soos
+version: 0.1
