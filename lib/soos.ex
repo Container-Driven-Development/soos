@@ -12,27 +12,42 @@ defmodule Soos do
       :world
 
   """
-  def hello do
-    :world
-  end
-
   def main(args) do
-    args |> parse_args |> process
-  end
+    # args |> parse_args |> process
 
-  def process([]) do
-    IO.puts "No arguments given"
-  end
+    imageNameTagged = "#{Config.parse()[:imageName]}:#{Tokenizer.depToken()}"
 
-  def process(options) do
+    IO.puts(imageNameTagged)
 
-    filename = options[:name]
+    {stdOut, returnCode} = System.cmd "docker", ["pull", imageNameTagged]
 
-    case File.read(filename) do
-      {:ok, body} -> :crypto.hash(:sha, body) |> Base.encode16 |> IO.puts
-      {:error, reason} -> IO.puts("Unable to open '#{filename}' because of following reason: #{reason}")
+    IO.puts "O: #{stdOut}; S: #{returnCode}"
+
+    if returnCode == 1 do
+      Path.expand('./Dockerfile') |> Path.absname |> File.write("""
+FROM kkarczmarczyk/node-yarn:8.0-wheezy
+
+WORKDIR /build/app
+
+ENV PATH=/build/node_modules/.bin:$PATH
+
+ADD package.json /build/
+
+RUN cd /build && \
+  ([[ -n ${https_proxy} ]] && yarn config set proxy ${https_proxy} -g || true) && \
+  yarn && \
+  chmod -R 777 /build
+
+RUN mkdir /.config /.cache && \
+  chmod -R 777 /.config /.cache
+
+ENTRYPOINT cd /build/app && \
+  rm -rf node_modules && \
+  mv /build/node_modules /build/app/ && \
+  yarn build
+      """, [:write])
+      {stdOut, returnCode} = System.cmd "docker", ["build", "-t", imageNameTagged, "."]
     end
-
   end
 
   defp parse_args(args) do
