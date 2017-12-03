@@ -135,6 +135,23 @@ func runImage(imageNameWithTag string) {
 	fmt.Print(out.String())
 }
 
+func pullImage(imageNameWithTag string) {
+
+	cmd := exec.Command("docker", "pull", imageNameWithTag)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	var errout bytes.Buffer
+	cmd.Stderr = &errout
+	err := cmd.Run()
+
+	if err != nil {
+		fmt.Printf("\nPull Image Failed with:\n")
+		fmt.Print(errout.String())
+	}
+
+	fmt.Print(out.String())
+}
+
 func pushImage(imageNameWithTag string) {
 
 	cmd := exec.Command("docker", "push", imageNameWithTag)
@@ -163,9 +180,18 @@ func main() {
 	genDockerfile()
 	fmt.Printf("done\n")
 
-	imageIsPresent := checkImagePresence(imageReference)
+	localImageIsPresent := checkImagePresence(imageReference)
 
-	if !imageIsPresent {
+	localImageIsPresent2 := false
+
+	if !localImageIsPresent {
+		fmt.Printf("<-> Image is missing, trying to pull...")
+		pullImage(imageReference)
+		localImageIsPresent2 := checkImagePresence(imageReference)
+		fmt.Printf("<-> result: %t done\n", localImageIsPresent2)
+	}
+
+	if !localImageIsPresent && !localImageIsPresent2 {
 		fmt.Printf("<-> Image is missing, building...")
 		buildImage(imageReference)
 		fmt.Printf("<-> done\n")
@@ -175,7 +201,7 @@ func main() {
 	runImage(imageReference)
 	fmt.Printf("\n\ndone\n")
 
-	if !imageIsPresent {
+	if !localImageIsPresent2 {
 		fmt.Printf("<-> Pushing image...")
 		pushImage(imageReference)
 		fmt.Printf("done\n")
