@@ -19,35 +19,19 @@ defmodule Soos do
 
     IO.puts(imageNameTagged)
 
-    {stdOut, returnCode} = System.cmd "docker", ["pull", imageNameTagged]
+    # {stdOut, returnCode} = System.cmd "docker", ["pull", imageNameTagged]
+    {stdOut, returnCode} = System.cmd "docker", ["image", "ls", "-q", "--filter=reference=#{imageNameTagged}"]
 
     IO.puts "O: #{stdOut}; S: #{returnCode}"
 
-    if returnCode == 1 do
-      Path.expand('./Dockerfile') |> Path.absname |> File.write("""
-FROM kkarczmarczyk/node-yarn:8.0-wheezy
-
-WORKDIR /build/app
-
-ENV PATH=/build/node_modules/.bin:$PATH
-
-ADD package.json /build/
-
-RUN cd /build && \
-  ([[ -n ${https_proxy} ]] && yarn config set proxy ${https_proxy} -g || true) && \
-  yarn && \
-  chmod -R 777 /build
-
-RUN mkdir /.config /.cache && \
-  chmod -R 777 /.config /.cache
-
-ENTRYPOINT cd /build/app && \
-  rm -rf node_modules && \
-  mv /build/node_modules /build/app/ && \
-  yarn build
-      """, [:write])
+    if stdOut == "" do
+      Path.expand('./Dockerfile') |> Path.absname |> File.write(Npm.getDockerFile, [:write])
       {stdOut, returnCode} = System.cmd "docker", ["build", "-t", imageNameTagged, "."]
     end
+
+    {stdOut, returnCode} = System.cmd "docker", ["run", "--rm", "-v", "#{System.cwd}:/build/app/", imageNameTagged]
+
+    IO.puts stdOut
   end
 
   defp parse_args(args) do
