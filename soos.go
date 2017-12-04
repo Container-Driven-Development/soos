@@ -64,7 +64,7 @@ func checkImagePresence(imageNameWithTag string) bool {
 func genDockerfile() {
 
 	dockerfileContent := `
-FROM kkarczmarczyk/node-yarn:8.0-wheezy
+FROM node:9.2.0
 
 WORKDIR /build/app
 
