@@ -14,7 +14,8 @@ import (
 
 // Configuration : represent .soos.json structure
 type Configuration struct {
-	ImageName string
+	ImageName   string
+	ExposePorts []string
 }
 
 func getConfig() Configuration {
@@ -131,7 +132,15 @@ func cwd() string {
 
 func runImage(imageNameWithTag string) {
 
-	args := append([]string{"run", "--rm", "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+	args := []string{"run"}
+
+	if len(getConfig().ExposePorts) != 0 {
+		exposePortsArg := "-p" + getConfig().ExposePorts[0]
+		args = append([]string{"run", "--rm", exposePortsArg, "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+	} else {
+
+		args = append([]string{"run", "--rm", "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+	}
 
 	cmd := exec.Command("docker", args...)
 

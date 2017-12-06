@@ -1,3 +1,6 @@
 {
-    "ImageName": "elmariofredo/soos-npm"
+    "ImageName": "elmariofredo/soos-npm",
+    "ExposePorts": [
+        "3000:3000"
+    ]
 }
