@@ -86,7 +86,7 @@ RUN mkdir /.config /.cache && chmod -R 777 /.config /.cache
 
 ENTRYPOINT ["yarn"]
 
-CMD ["build"]
+CMD ["start"]
     `
 
 	if _, err := os.Stat("Dockerfile"); os.IsNotExist(err) {
@@ -131,7 +131,10 @@ func cwd() string {
 
 func runImage(imageNameWithTag string) {
 
-	cmd := exec.Command("docker", "run", "--rm", "-v", cwd()+":/build/app", imageNameWithTag)
+	args := append([]string{"run", "--rm", "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+
+	cmd := exec.Command("docker", args...)
+
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	var errout bytes.Buffer

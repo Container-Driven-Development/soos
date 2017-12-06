@@ -13,5 +13,5 @@ RUN mkdir /.config /.cache && chmod -R 777 /.config /.cache
 
 ENTRYPOINT ["yarn"]
 
-CMD ["build"]
+CMD ["start"]
     
