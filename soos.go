@@ -9,13 +9,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 type Configuration struct {
 	ImageName string
 }
 
-func getConfig() string {
+func getConfig() Configuration {
 	file, _ := os.Open(".soos.json")
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
@@ -23,7 +24,7 @@ func getConfig() string {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	return configuration.ImageName
+	return configuration
 }
 
 func tokenizer() string {
@@ -40,7 +41,13 @@ func tokenizer() string {
 
 	fileSum := fmt.Sprintf("%x", h.Sum(nil))
 
-	return getConfig() + ":" + fileSum
+	imageName := getConfig().ImageName
+
+	if imageName == "" {
+		imageName = filepath.Base(cwd())
+	}
+
+	return imageName + ":" + fileSum
 }
 
 func checkImagePresence(imageNameWithTag string) bool {
@@ -102,9 +109,12 @@ func buildImage(imageNameWithTag string) {
 	cmd := exec.Command("docker", "build", "-t", imageNameWithTag, ".")
 	var out bytes.Buffer
 	cmd.Stdout = &out
+	var errout bytes.Buffer
+	cmd.Stderr = &errout
 	err := cmd.Run()
 
 	if err != nil {
+		fmt.Printf("Build Image Failed with: %q\n", errout.String())
 		log.Fatal(err)
 	}
 
