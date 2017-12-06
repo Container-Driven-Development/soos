@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 )
 
+// Configuration : represent .soos.json structure
 type Configuration struct {
 	ImageName string
 }
