@@ -1,4 +1,4 @@
-package main
+package soos
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ type Configuration struct {
 	ExposePorts []string
 }
 
-func getConfig() Configuration {
+func GetConfig() Configuration {
 	file, _ := os.Open(".soos.json")
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
@@ -29,7 +29,7 @@ func getConfig() Configuration {
 	return configuration
 }
 
-func tokenizer() string {
+func Tokenizer() string {
 	f, err := os.Open("package.json")
 	if err != nil {
 		log.Fatal(err)
@@ -43,16 +43,16 @@ func tokenizer() string {
 
 	fileSum := fmt.Sprintf("%x", h.Sum(nil))
 
-	imageName := getConfig().ImageName
+	imageName := GetConfig().ImageName
 
 	if imageName == "" {
-		imageName = filepath.Base(cwd())
+		imageName = filepath.Base(Cwd())
 	}
 
 	return imageName + ":" + fileSum
 }
 
-func checkImagePresence(imageNameWithTag string) bool {
+func CheckImagePresence(imageNameWithTag string) bool {
 	cmd := exec.Command("docker", "image", "ls", "-q", imageNameWithTag)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -70,7 +70,7 @@ func checkImagePresence(imageNameWithTag string) bool {
 
 }
 
-func genDockerfile() {
+func GenDockerfile() {
 
 	dockerfileContent := `
 FROM node:9.2.0
@@ -106,7 +106,7 @@ CMD ["start"]
 	}
 }
 
-func buildImage(imageNameWithTag string) {
+func BuildImage(imageNameWithTag string) {
 
 	cmd := exec.Command("docker", "build", "-t", imageNameWithTag, ".")
 	var out bytes.Buffer
@@ -122,7 +122,7 @@ func buildImage(imageNameWithTag string) {
 
 }
 
-func cwd() string {
+func Cwd() string {
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -130,16 +130,16 @@ func cwd() string {
 	return dir
 }
 
-func runImage(imageNameWithTag string) {
+func RunImage(imageNameWithTag string) {
 
 	args := []string{"run"}
 
-	if len(getConfig().ExposePorts) != 0 {
-		exposePortsArg := "-p" + getConfig().ExposePorts[0]
-		args = append([]string{"run", "--rm", exposePortsArg, "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+	if len(GetConfig().ExposePorts) != 0 {
+		exposePortsArg := "-p" + GetConfig().ExposePorts[0]
+		args = append([]string{"run", "--rm", exposePortsArg, "-v", Cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
 	} else {
 
-		args = append([]string{"run", "--rm", "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+		args = append([]string{"run", "--rm", "-v", Cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
 	}
 
 	cmd := exec.Command("docker", args...)
@@ -158,7 +158,7 @@ func runImage(imageNameWithTag string) {
 	fmt.Print(out.String())
 }
 
-func pullImage(imageNameWithTag string) {
+func PullImage(imageNameWithTag string) {
 
 	cmd := exec.Command("docker", "pull", imageNameWithTag)
 	var out bytes.Buffer
@@ -175,7 +175,7 @@ func pullImage(imageNameWithTag string) {
 	fmt.Print(out.String())
 }
 
-func pushImage(imageNameWithTag string) {
+func PushImage(imageNameWithTag string) {
 
 	cmd := exec.Command("docker", "push", imageNameWithTag)
 	var out bytes.Buffer
@@ -196,37 +196,37 @@ func pushImage(imageNameWithTag string) {
 func main() {
 	fmt.Printf("<*> Soos start\n")
 
-	imageReference := tokenizer()
+	imageReference := Tokenizer()
 	fmt.Printf("<-> Generated image name is %s\n", imageReference)
 
 	fmt.Printf("<-> Verifying/Generating Dockerfile presence...")
-	genDockerfile()
+	GenDockerfile()
 	fmt.Printf("done\n")
 
-	localImageIsPresent := checkImagePresence(imageReference)
+	localImageIsPresent := CheckImagePresence(imageReference)
 
 	localImageIsPresent2 := false
 
 	if !localImageIsPresent {
 		fmt.Printf("<-> Image is missing, trying to pull...")
-		pullImage(imageReference)
-		localImageIsPresent2 := checkImagePresence(imageReference)
+		PullImage(imageReference)
+		localImageIsPresent2 := CheckImagePresence(imageReference)
 		fmt.Printf("<-> result: %t done\n", localImageIsPresent2)
 	}
 
 	if !localImageIsPresent && !localImageIsPresent2 {
 		fmt.Printf("<-> Image is missing, building...")
-		buildImage(imageReference)
+		BuildImage(imageReference)
 		fmt.Printf("<-> done\n")
 	}
 
 	fmt.Printf("<-> Running image...\n\n")
-	runImage(imageReference)
+	RunImage(imageReference)
 	fmt.Printf("\n\ndone\n")
 
 	if !localImageIsPresent2 {
 		fmt.Printf("<-> Pushing image...")
-		pushImage(imageReference)
+		PushImage(imageReference)
 		fmt.Printf("done\n")
 	}
 
