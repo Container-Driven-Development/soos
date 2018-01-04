@@ -1,5 +1,9 @@
 {
     "ImageName": "elmariofredo/soos-npm",
+    "HashFiles": [
+        "package.json",
+        "composer.json"
+    ],
     "ExposePorts": [
         "3000:3000"
     ]

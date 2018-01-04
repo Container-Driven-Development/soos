@@ -11,12 +11,20 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+
+	concatenate "github.com/paulvollmer/go-concatenate"
 )
 
 // Configuration : represent .soos.json structure
 type Configuration struct {
 	ImageName   string
 	ExposePorts []string
+	HashFiles   []string
+}
+
+// DefaultConfig : base for .soos.json
+var DefaultConfig = Configuration{
+	HashFiles: []string{"package.json"},
 }
 
 func getConfig() Configuration {
@@ -27,18 +35,24 @@ func getConfig() Configuration {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	if len(configuration.HashFiles) == 0 {
+		configuration.HashFiles = DefaultConfig.HashFiles
+	}
+
 	return configuration
 }
 
-func tokenizer() string {
-	f, err := os.Open("package.json")
+func tokenizer(hashFiles []string) string {
+
+	data, err := concatenate.FilesToBytes("\n", hashFiles...)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
 
 	h := sha1.New()
-	if _, err := io.Copy(h, f); err != nil {
+	if _, err := io.Copy(h, bytes.NewReader(data)); err != nil {
 		log.Fatal(err)
 	}
 
@@ -202,8 +216,9 @@ func pushImage(imageNameWithTag string) {
 func main() {
 	fmt.Printf("<*> Soos start\n")
 
-	imageReference := tokenizer()
-	fmt.Printf("<-> Generated image name is %s\n", imageReference)
+	hashFiles := getConfig().HashFiles
+	imageReference := tokenizer(hashFiles)
+	fmt.Printf("<-> Generated image name is %s based on %s\n", imageReference, hashFiles)
 
 	fmt.Printf("<-> Verifying/Generating Dockerfile presence...")
 	genDockerfile()
