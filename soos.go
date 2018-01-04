@@ -224,7 +224,7 @@ func main() {
 	runImage(imageReference)
 	fmt.Printf("\n\ndone\n")
 
-	if !localImageIsPresent2 {
+	if !localImageIsPresent && !localImageIsPresent2 {
 		fmt.Printf("<-> Pushing image...")
 		pushImage(imageReference)
 		fmt.Printf("done\n")
