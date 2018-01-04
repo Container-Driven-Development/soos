@@ -7,11 +7,11 @@ ENV PATH=/build/node_modules/.bin:$PATH
 
 ADD package.json /build/
 
-RUN yarn && chmod -R 777 /build
+RUN npm install && chmod -R 777 /build
 
 RUN mkdir /.config /.cache && chmod -R 777 /.config /.cache
 
-ENTRYPOINT ["yarn"]
+ENTRYPOINT [ "npm" ]
 
 CMD ["start"]
     
