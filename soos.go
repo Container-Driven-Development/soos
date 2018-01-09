@@ -226,18 +226,19 @@ func main() {
 
 	localImageIsPresent := checkImagePresence(imageReference)
 
-	localImageIsPresent2 := false
+	localImageIsBuild := false
 
 	if !localImageIsPresent {
 		fmt.Printf("<-> Image is missing, trying to pull...")
 		pullImage(imageReference)
-		localImageIsPresent2 := checkImagePresence(imageReference)
-		fmt.Printf("<-> result: %t done\n", localImageIsPresent2)
+		localImageIsPresent = checkImagePresence(imageReference)
+		fmt.Printf("<-> result: %t done\n", localImageIsPresent)
 	}
 
-	if !localImageIsPresent && !localImageIsPresent2 {
+	if !localImageIsPresent {
 		fmt.Printf("<-> Image is missing, building...")
 		buildImage(imageReference)
+		localImageIsBuild = true
 		fmt.Printf("<-> done\n")
 	}
 
@@ -245,7 +246,7 @@ func main() {
 	runImage(imageReference)
 	fmt.Printf("\n\ndone\n")
 
-	if !localImageIsPresent && !localImageIsPresent2 {
+	if localImageIsBuild {
 		fmt.Printf("<-> Pushing image...")
 		pushImage(imageReference)
 		fmt.Printf("done\n")
