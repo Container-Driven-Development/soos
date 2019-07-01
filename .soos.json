@@ -6,5 +6,9 @@
     ],
     "ExposePorts": [
         "3000:3000"
-    ]
+    ],
+    "EnvVariables": {
+        "BUILD_VERSION": "1.2.3",
+        "BUILD_ENV": "test"
+    }
 }
