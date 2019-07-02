@@ -17,9 +17,10 @@ import (
 
 // Configuration : represent .soos.json structure
 type Configuration struct {
-	ImageName   string
-	ExposePorts []string
-	HashFiles   []string
+	ImageName    string
+	ExposePorts  []string
+	HashFiles    []string
+	EnvVariables map[string]string
 }
 
 // DefaultConfig : base for .soos.json
@@ -146,21 +147,29 @@ func cwd() string {
 }
 
 func runImage(imageNameWithTag string) {
-
-	args := []string{"run"}
-
 	user, userErr := user.Current()
 	if userErr != nil {
 		log.Fatal(userErr)
 	}
 
-	if len(getConfig().ExposePorts) != 0 {
-		exposePortsArg := "-p" + getConfig().ExposePorts[0]
-		args = append([]string{"run", "--rm", "-u", user.Uid + ":" + user.Gid, exposePortsArg, "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
-	} else {
+	dockerRunOptions := []string{"--rm", "-u", user.Uid + ":" + user.Gid, "-v", cwd() + ":/build/app"}
 
-		args = append([]string{"run", "--rm", "-u", user.Uid + ":" + user.Gid, "-v", cwd() + ":/build/app", imageNameWithTag}, os.Args[1:]...)
+	if len(getConfig().ExposePorts) != 0 {
+		for _, exposePort := range getConfig().ExposePorts {
+			dockerRunOptions = append(dockerRunOptions, "-p"+exposePort)
+		}
 	}
+
+	if len(getConfig().EnvVariables) != 0 {
+		for envVarName, envVarValue := range getConfig().EnvVariables {
+			dockerRunOptions = append(dockerRunOptions, "-e", envVarName+"="+envVarValue)
+		}
+	}
+
+	args := []string{"run"}
+	args = append(args, dockerRunOptions...)
+	args = append(args, imageNameWithTag)
+	args = append(args, os.Args[1:]...)
 
 	cmd := exec.Command("docker", args...)
 
